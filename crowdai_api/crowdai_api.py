@@ -7,6 +7,8 @@ import json
 __docformat__ = 'reStructuredText'
 __author__ = 'S.P. Mohanty'
 
+LOCAL_TEST = True
+
 """Main module."""
 
 class API:
@@ -59,16 +61,21 @@ class API:
         """
         url = "{}/{}/{}".format(self.base_url, "external_graders", api_key)
         response = make_api_call(self.auth_token, "get", url)
-        response_body = json.loads(response.text)
-        if response.status_code == 200:
-            participant_id = int(response_body["participant_id"])
-            message = response_body["message"]
+        if not LOCAL_TEST:
+            response_body = json.loads(response.text)
+            if response.status_code == 200:
+                participant_id = int(response_body["participant_id"])
+                message = response_body["message"]
 
-            self.participant_api_key = api_key
-            self.participant_id = participant_id
+                self.participant_api_key = api_key
+                self.participant_id = participant_id
+            else:
+                message = response_body["message"]
+                raise CrowdAIRemoteException(message)
         else:
-            message = response_body["message"]
-            raise CrowdAIRemoteException(message)
+            self.participant_api_key = 0
+            self.participant_id = 0
+            
 
     def get_all_submissions(self, challenge_id, grading_status="graded"):
         """Returns all submissions for a particular challenge id
